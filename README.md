@@ -189,15 +189,15 @@ Recommended monitoring tools:
 | Layer            | Technology                               |
 | ---------------- | ---------------------------------------- |
 | Frontend         | React, Tailwind CSS                      |
-| Backend API      | Node.js, NestJS, Express, or Go          |
-| Workers          | Go, Node.js, Python, or k6-based workers |
+| Backend API      | Node.js, NestJS, Express                 |
+| Workers          | Node.js                                  |
 | Database         | PostgreSQL                               |
-| Queue            | Redis Streams, RabbitMQ, Kafka, or NATS  |
+| Queue            | Redis Streams,                           |
 | Containerization | Docker                                   |
 | Orchestration    | Kubernetes                               |
 | Autoscaling      | Kubernetes HPA, KEDA                     |
 | Metrics          | Prometheus                               |
-| Dashboard        | Grafana or custom React dashboard        |
+| Dashboard        | React dashboard                          |
 
 ---
 
