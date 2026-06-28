@@ -454,6 +454,8 @@ Unauthorized load testing can be considered a denial-of-service attack.
 
 This project is currently in the design and development phase.
 
+Backend implementation is maintained in [`backend`](backend/README.md). The current backend branch contains the control-plane API, worker process, initial PostgreSQL migration, Redis job partitioning, target safety controls, health/metrics endpoints, and automated quality gates.
+
 Planned development phases:
 
 ```text
