@@ -456,6 +456,10 @@ This project is currently in the design and development phase.
 
 Backend implementation is maintained in [`backend`](backend/README.md). The current backend branch contains the control-plane API, worker process, initial PostgreSQL migration, Redis job partitioning, target safety controls, health/metrics endpoints, and automated quality gates.
 
+The operator dashboard is maintained in [`frontend`](frontend/README.md). It
+connects directly to the versioned backend API for target verification, test
+configuration, distributed run control, live metrics, and final reports.
+
 Planned development phases:
 
 ```text
