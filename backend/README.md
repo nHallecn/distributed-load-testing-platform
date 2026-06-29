@@ -41,7 +41,10 @@ npm install
 npm run migration:run
 ```
 
-Replace every placeholder in `.env` before starting a service. `TARGET_VERIFICATION_REQUIRED` should remain `true` outside isolated automated tests.
+Replace every placeholder in `.env` before starting a service.
+`TARGET_VERIFICATION_REQUIRED` should remain `true` outside isolated automated
+tests. Set `HEALTH_MAX_HEAP_MB` below the API container's memory limit so
+readiness fails before the process reaches an out-of-memory condition.
 
 ## Run
 
@@ -82,8 +85,16 @@ Network egress policy must also be enforced at the Kubernetes or cloud-network l
 ```powershell
 npm run build
 npm test
+npm run test:integration
+npm run test:e2e
 npm run lint
 ```
+
+`test:integration` uses the configured PostgreSQL and Redis services. It verifies
+migration state, checks entity/schema drift, exercises database constraints
+inside a rolled-back transaction, and uses an isolated temporary BullMQ queue.
+`test:e2e` boots the real Nest application and exercises health, authentication,
+authorization, target-verification challenge creation, and database cleanup.
 
 ## Containers
 

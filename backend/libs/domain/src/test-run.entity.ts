@@ -1,6 +1,7 @@
 import { RunStatus } from '@app/config';
 import {
   Column,
+  Check,
   Entity,
   Index,
   JoinColumn,
@@ -11,19 +12,35 @@ import { BaseEntity } from './base.entity';
 import { LoadTestEntity } from './load-test.entity';
 import { MetricSnapshotEntity } from './metric-snapshot.entity';
 import { WorkerEntity } from './worker.entity';
+import { UserEntity } from './user.entity';
 
 @Entity({ name: 'test_runs' })
-@Index(['testId', 'createdAt'])
+@Index('idx_test_runs_test_created', ['testId', 'createdAt'])
+@Index('idx_one_active_run_per_test', ['testId'], {
+  unique: true,
+  where: `"status" IN ('queued', 'starting', 'running', 'stopping')`,
+})
+@Check('test_runs_desired_workers_check', '"desired_workers" > 0')
 export class TestRunEntity extends BaseEntity {
   @Column({ name: 'test_id', type: 'uuid' })
   testId: string;
 
   @ManyToOne(() => LoadTestEntity, (test) => test.runs, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'test_id' })
+  @JoinColumn({
+    name: 'test_id',
+    foreignKeyConstraintName: 'test_runs_test_id_fkey',
+  })
   test: LoadTestEntity;
 
   @Column({ name: 'requested_by', type: 'uuid' })
   requestedBy: string;
+
+  @ManyToOne(() => UserEntity, { onDelete: 'RESTRICT' })
+  @JoinColumn({
+    name: 'requested_by',
+    foreignKeyConstraintName: 'test_runs_requested_by_fkey',
+  })
+  requester: UserEntity;
 
   @Column({
     type: 'enum',

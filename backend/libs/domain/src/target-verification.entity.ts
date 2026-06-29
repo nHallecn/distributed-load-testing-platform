@@ -2,12 +2,20 @@ import {
   VerificationMethod,
   VerificationStatus,
 } from '@app/config';
-import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  Unique,
+} from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { UserEntity } from './user.entity';
 
 @Entity({ name: 'target_verifications' })
-@Index(['ownerId', 'hostname'])
+@Index('idx_target_verifications_owner_hostname', ['ownerId', 'hostname'])
+@Unique('target_verifications_token_key', ['token'])
 export class TargetVerificationEntity extends BaseEntity {
   @Column({ name: 'owner_id', type: 'uuid' })
   ownerId: string;
@@ -15,7 +23,10 @@ export class TargetVerificationEntity extends BaseEntity {
   @ManyToOne(() => UserEntity, (user) => user.targetVerifications, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'owner_id' })
+  @JoinColumn({
+    name: 'owner_id',
+    foreignKeyConstraintName: 'target_verifications_owner_id_fkey',
+  })
   owner: UserEntity;
 
   @Column({ length: 253 })
@@ -28,7 +39,6 @@ export class TargetVerificationEntity extends BaseEntity {
   })
   method: VerificationMethod;
 
-  @Index({ unique: true })
   @Column({ length: 100 })
   token: string;
 

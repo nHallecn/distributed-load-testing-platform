@@ -1,13 +1,27 @@
-import { Column, Entity, Index } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+} from 'typeorm';
+import { UserEntity } from './user.entity';
 
 @Entity({ name: 'audit_logs' })
-@Index(['actorId', 'createdAt'])
+@Index('idx_audit_logs_actor_created', ['actorId', 'createdAt'])
 export class AuditLogEntity {
   @Column({ type: 'bigint', primary: true, generated: 'increment' })
   id: string;
 
   @Column({ name: 'actor_id', type: 'uuid', nullable: true })
   actorId: string | null;
+
+  @ManyToOne(() => UserEntity, { onDelete: 'SET NULL' })
+  @JoinColumn({
+    name: 'actor_id',
+    foreignKeyConstraintName: 'audit_logs_actor_id_fkey',
+  })
+  actor: UserEntity | null;
 
   @Column({ length: 100 })
   action: string;
