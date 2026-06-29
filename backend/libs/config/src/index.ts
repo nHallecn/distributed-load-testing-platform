@@ -17,6 +17,7 @@ export const environmentSchema = Joi.object({
   MAX_TEST_DURATION_SECONDS: Joi.number().integer().min(1).default(3_600),
   TARGET_VERIFICATION_REQUIRED: Joi.boolean().truthy('true').falsy('false').default(true),
   TARGET_REQUEST_TIMEOUT_MS: Joi.number().integer().min(100).default(10_000),
+  HEALTH_MAX_HEAP_MB: Joi.number().integer().min(128).default(1_024),
   DATABASE_SSL: Joi.boolean().truthy('true').falsy('false').default(false),
 });
 

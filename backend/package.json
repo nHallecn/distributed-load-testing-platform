@@ -17,6 +17,8 @@
     "lint:fix": "npm run lint -- --fix",
     "format": "prettier --write \"{apps,libs,test}/**/*.ts\" \"*.{json,md}\"",
     "test": "jest --runInBand",
+    "test:e2e": "jest --runInBand --testRegex \".*\\.e2e-spec\\.ts$\"",
+    "test:integration": "jest --runInBand --testRegex \".*\\.integration-spec\\.ts$\"",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d libs/database/src/data-source.ts",

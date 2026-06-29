@@ -1,12 +1,12 @@
 import { UserRole } from '@app/config';
-import { Column, Entity, Index, OneToMany } from 'typeorm';
+import { Column, Entity, OneToMany, Unique } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { LoadTestEntity } from './load-test.entity';
 import { TargetVerificationEntity } from './target-verification.entity';
 
 @Entity({ name: 'users' })
+@Unique('users_email_key', ['email'])
 export class UserEntity extends BaseEntity {
-  @Index({ unique: true })
   @Column({ length: 320 })
   email: string;
 

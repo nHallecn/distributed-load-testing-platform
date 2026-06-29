@@ -1,8 +1,9 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { TestRunEntity } from './test-run.entity';
+import { WorkerEntity } from './worker.entity';
 
 @Entity({ name: 'metric_snapshots' })
-@Index(['runId', 'recordedAt'])
+@Index('idx_metric_snapshots_run_recorded', ['runId', 'recordedAt'])
 export class MetricSnapshotEntity {
   @Column({ type: 'bigint', primary: true, generated: 'increment' })
   id: string;
@@ -11,11 +12,21 @@ export class MetricSnapshotEntity {
   runId: string;
 
   @ManyToOne(() => TestRunEntity, (run) => run.metrics, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'run_id' })
+  @JoinColumn({
+    name: 'run_id',
+    foreignKeyConstraintName: 'metric_snapshots_run_id_fkey',
+  })
   run: TestRunEntity;
 
   @Column({ name: 'worker_id', type: 'uuid', nullable: true })
   workerId: string | null;
+
+  @ManyToOne(() => WorkerEntity, { onDelete: 'SET NULL' })
+  @JoinColumn({
+    name: 'worker_id',
+    foreignKeyConstraintName: 'metric_snapshots_worker_id_fkey',
+  })
+  worker: WorkerEntity | null;
 
   @Column({ name: 'recorded_at', type: 'timestamptz' })
   recordedAt: Date;
