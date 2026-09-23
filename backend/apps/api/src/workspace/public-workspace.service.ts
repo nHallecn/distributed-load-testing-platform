@@ -14,6 +14,12 @@ export class PublicWorkspaceService {
   ) {}
 
   async ownerId(): Promise<string> {
+    const existing = await this.users.findOneBy({
+      email: PUBLIC_WORKSPACE_EMAIL,
+      isActive: true,
+    });
+    if (existing) return existing.id;
+
     await this.users.upsert(
       {
         email: PUBLIC_WORKSPACE_EMAIL,

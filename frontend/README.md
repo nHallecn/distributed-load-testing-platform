@@ -4,7 +4,8 @@ React control-plane dashboard for the distributed load-testing platform.
 
 ## Capabilities
 
-- Account registration, sign-in, session restoration, and protected routes
+- Immediate public access with no account, sign-in, or session gate
+- Animated dashboard hero with direct test-creation and target-verification actions
 - DNS TXT and HTTPS-file target ownership challenges
 - Load-test profile creation with validated JSON headers/body and safety limits
 - Test profile listing and details

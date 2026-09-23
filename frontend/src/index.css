@@ -167,6 +167,12 @@
   }
 }
 
+@keyframes hero-icon-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @keyframes hero-packet-one {
   0%,
   100% {
@@ -228,7 +234,7 @@
 }
 
 .hero-orbit-icon {
-  animation: hero-spin 10s linear infinite;
+  animation: hero-icon-spin 10s linear infinite;
   transform-origin: center;
 }
 

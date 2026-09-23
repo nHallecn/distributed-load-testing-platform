@@ -320,7 +320,6 @@ Create a `.env` file:
 PORT=5000
 DATABASE_URL=postgresql://user:password@localhost:5432/loadtesting
 REDIS_URL=redis://localhost:6379
-JWT_SECRET=your_secret_key
 PROMETHEUS_URL=http://localhost:9090
 ```
 
@@ -423,7 +422,7 @@ This system must only be used to test applications, APIs, or services that you o
 
 Recommended safety features:
 
-* User authentication
+* Immediate public access without account registration
 * Domain ownership verification
 * Rate limits
 * Test size limits
