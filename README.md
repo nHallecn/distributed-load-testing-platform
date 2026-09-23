@@ -1,483 +1,129 @@
-# Distributed Load Testing System
+# LoadGrid
 
-A cloud-native distributed load testing platform designed to simulate large numbers of virtual users, generate traffic against target applications, collect real-time performance metrics, and produce final performance reports.
+LoadGrid is a free, no-signup distributed load-testing application. The dashboard, versioned API, database-backed control plane, and worker source now live in one Next.js repository.
 
-The system uses containerized workers, autoscaling, metrics collection, and a centralized controller to help developers and DevOps teams evaluate how applications behave under heavy traffic.
+Only test systems you own or have explicit permission to test. Target ownership verification, URL safety checks, run limits, audit logs, and API rate limiting remain enabled even though the product does not require user accounts.
 
----
-
-## Overview
-
-This project is a scalable load testing system that allows users to define, run, monitor, and analyze performance tests for web applications, APIs, and backend services.
-
-Instead of running all test traffic from a single machine, the system distributes the load across multiple worker containers. These workers generate requests to the target application while the platform collects metrics such as response time, request rate, error rate, CPU usage, memory usage, and active virtual users.
-
----
-
-## Key Features
-
-* Create and manage load test configurations
-* Simulate thousands of virtual users
-* Run distributed worker containers
-* Automatically scale workers based on test demand
-* Collect real-time performance metrics
-* Monitor tests through dashboards
-* Generate final test reports
-* Track success rate, failure rate, latency, and throughput
-* Support API load testing with custom methods, headers, and payloads
-* Provide a safe structure for authorized performance testing
-
----
-
-## System Architecture
+## Architecture
 
 ```text
-User / Dashboard
-        |
-        v
-Load Test API / Controller
-        |
-        v
-Test Scheduler / Orchestrator
-        |
-        v
-Message Queue
-        |
-        v
-Worker Containers
-        |
-        v
-Target Application
-
-Workers ---> Metrics Collector ---> Prometheus / Grafana
-Controller ---> Database
+Browser
+   |
+   v
+Next.js App Router (:3000)
+   |-- dashboard pages
+   |-- /api/v1 route handlers
+   |-- application services
+   |
+   +--> PostgreSQL
+   +--> Redis / BullMQ --> worker process --> verified target
 ```
 
----
+Next owns both the UI and HTTP API. The long-running BullMQ consumer is a separate process started from the same package with `npm run worker`; it is not a second web application.
 
-## Main Components
+Public visitors use one internal shared workspace identity. There are no registration, login, session, or JWT endpoints. `/login` and `/register` redirect to `/app` for old bookmarks.
 
-### 1. Frontend Dashboard
+## Requirements
 
-The frontend allows users to create, start, stop, and monitor load tests.
+- Node.js 22 or newer
+- PostgreSQL
+- Redis
 
-Users can configure:
-
-* Target URL
-* HTTP method
-* Number of virtual users
-* Test duration
-* Ramp-up time
-* Headers
-* Request body
-* Expected response time
-* Stop conditions
-
----
-
-### 2. Backend Controller
-
-The backend controller is responsible for managing the full lifecycle of a load test.
-
-Responsibilities include:
-
-* Creating test configurations
-* Validating user input
-* Saving tests to the database
-* Starting and stopping tests
-* Calculating the number of workers needed
-* Sending jobs to workers
-* Collecting test results
-* Generating test summaries
-
----
-
-### 3. Worker Containers
-
-Workers are responsible for generating traffic.
-
-Each worker receives test instructions from the controller and simulates a portion of the total virtual users.
-
-Example:
-
-```text
-1 worker = 500 virtual users
-
-10,000 virtual users / 500 users per worker = 20 workers
-```
-
-Workers collect and report:
-
-* Total requests
-* Successful requests
-* Failed requests
-* Response times
-* Timeout errors
-* HTTP status codes
-* CPU usage
-* Memory usage
-
----
-
-### 4. Message Queue
-
-A message queue is used to decouple the controller from the workers.
-
-The controller sends test jobs to the queue, and workers consume those jobs when they are ready.
-
-Possible queue technologies:
-
-* Redis Streams
-* RabbitMQ
-* Kafka
-* NATS
-
----
-
-### 5. Autoscaling
-
-The system supports autoscaling to increase or reduce the number of workers depending on test requirements.
-
-Autoscaling can be based on:
-
-* Number of virtual users
-* CPU usage
-* Memory usage
-* Worker load
-* Queue size
-* Request latency
-
-In a Kubernetes deployment, autoscaling can be handled using:
-
-* Kubernetes Horizontal Pod Autoscaler
-* KEDA
-* Prometheus metrics
-
----
-
-### 6. Metrics and Monitoring
-
-Metrics are collected during test execution and displayed in real time.
-
-Important metrics include:
-
-* Requests per second
-* Average response time
-* Minimum response time
-* Maximum response time
-* 95th percentile response time
-* 99th percentile response time
-* Error rate
-* Successful requests
-* Failed requests
-* Active workers
-* Active virtual users
-* CPU usage
-* Memory usage
-
-Recommended monitoring tools:
-
-* Prometheus
-* Grafana
-* InfluxDB
-* TimescaleDB
-
----
-
-## Recommended Tech Stack
-
-| Layer            | Technology                               |
-| ---------------- | ---------------------------------------- |
-| Frontend         | React, Tailwind CSS                      |
-| Backend API      | Node.js, NestJS, Express                 |
-| Workers          | Node.js                                  |
-| Database         | PostgreSQL                               |
-| Queue            | Redis Streams,                           |
-| Containerization | Docker                                   |
-| Orchestration    | Kubernetes                               |
-| Autoscaling      | Kubernetes HPA, KEDA                     |
-| Metrics          | Prometheus                               |
-| Dashboard        | React dashboard                          |
-
----
-
-## Example Test Configuration
-
-```json
-{
-  "name": "Login API Stress Test",
-  "targetUrl": "https://example.com/api/login",
-  "method": "POST",
-  "virtualUsers": 10000,
-  "duration": "15m",
-  "rampUp": "1000 users/min",
-  "headers": {
-    "Content-Type": "application/json"
-  },
-  "body": {
-    "email": "test@example.com",
-    "password": "password123"
-  }
-}
-```
-
----
-
-## API Endpoints
-
-Example backend endpoints:
-
-```text
-POST   /tests
-GET    /tests
-GET    /tests/:id
-POST   /tests/:id/start
-POST   /tests/:id/stop
-GET    /tests/:id/metrics
-GET    /tests/:id/report
-```
-
----
-
-## Database Design
-
-Example main tables:
-
-```text
-users
-tests
-test_runs
-workers
-test_metrics
-reports
-```
-
-Example `tests` table:
-
-```text
-id
-user_id
-name
-target_url
-method
-duration
-virtual_users
-ramp_up_time
-status
-created_at
-updated_at
-```
-
-Example `test_runs` table:
-
-```text
-id
-test_id
-started_at
-ended_at
-status
-total_requests
-successful_requests
-failed_requests
-average_response_time
-p95_response_time
-p99_response_time
-error_rate
-```
-
----
-
-## Local Development Setup
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/your-username/distributed-load-testing-system.git
-cd distributed-load-testing-system
-```
-
-### 2. Install dependencies
+## Local development
 
 ```bash
 npm install
-```
-
-Or, if the backend and frontend are separated:
-
-```bash
-cd backend
-npm install
-
-cd ../frontend
-npm install
-```
-
-### 3. Create environment file
-
-Create a `.env` file:
-
-```env
-PORT=5000
-DATABASE_URL=postgresql://user:password@localhost:5432/loadtesting
-REDIS_URL=redis://localhost:6379
-PROMETHEUS_URL=http://localhost:9090
-```
-
-### 4. Start services with Docker Compose
-
-```bash
-docker-compose up -d
-```
-
-### 5. Run the application
-
-```bash
+cp .env.example .env
+npm run migration:run
 npm run dev
 ```
 
----
-
-## Docker Usage
-
-Build the worker image:
+In a second terminal, start the queue consumer:
 
 ```bash
-docker build -t loadtest-worker ./worker
+npm run worker:dev
 ```
 
-Run a worker container:
+Open `http://localhost:3000`. The browser calls the same origin under `/api/v1`, so no separate frontend API URL or CORS setup is needed.
+
+## Docker Compose
+
+The included Compose stack starts PostgreSQL, Redis, runs migrations once, then starts the Next app and worker:
 
 ```bash
-docker run --env-file .env loadtest-worker
+docker compose up --build
 ```
 
----
+The application is available at `http://localhost:3000`. PostgreSQL data is retained in the `postgres-data` volume.
 
-## Kubernetes Deployment
+## Commands
 
-The system can be deployed on Kubernetes using manifests or Helm charts.
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the Next development server |
+| `npm run build` | Create the production Next build |
+| `npm start` | Run the production Next server |
+| `npm run worker` | Run the BullMQ worker |
+| `npm run worker:dev` | Run the worker in watch mode |
+| `npm run migration:run` | Apply pending TypeORM migrations |
+| `npm run typecheck` | Type-check the full application |
+| `npm run lint` | Run ESLint |
+| `npm test` | Run UI and server unit tests |
+| `npm run test:e2e` | Exercise Next route handlers against real infrastructure |
+| `npm run test:integration` | Run database/queue infrastructure tests |
 
-Example deployment flow:
+## API
 
-```bash
-kubectl apply -f k8s/namespace.yaml
-kubectl apply -f k8s/postgres.yaml
-kubectl apply -f k8s/redis.yaml
-kubectl apply -f k8s/controller.yaml
-kubectl apply -f k8s/workers.yaml
-kubectl apply -f k8s/hpa.yaml
-```
+All application endpoints share the `/api/v1` prefix.
 
----
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` | `/tests` | List tests in the public workspace |
+| `POST` | `/tests` | Create a test |
+| `GET` | `/tests/:id` | Read a test |
+| `POST` | `/tests/:testId/runs` | Start a distributed run |
+| `GET` | `/runs/:id` | Read run state |
+| `POST` | `/runs/:id/stop` | Request a stop |
+| `GET` | `/runs/:id/metrics` | Read metric snapshots |
+| `GET` | `/runs/:id/report` | Read the final report |
+| `POST` | `/targets/verifications` | Begin target verification |
+| `POST` | `/targets/verifications/:id/verify` | Check target ownership |
+| `GET` | `/health/live` | Process liveness |
+| `GET` | `/health/ready` | Database readiness |
+| `GET` | `/metrics` | Prometheus metrics |
 
-## Test Execution Flow
+## Environment
+
+Copy `.env.example` to `.env`. Important values are:
+
+- `DATABASE_URL`: PostgreSQL connection string
+- `REDIS_URL`: Redis connection string
+- `WORKER_QUEUE_NAME`: BullMQ queue name
+- `WORKER_CAPACITY`: virtual users assigned per worker
+- `MAX_VIRTUAL_USERS_PER_RUN`: hard run-size limit
+- `MAX_TEST_DURATION_SECONDS`: hard duration limit
+- `TARGET_VERIFICATION_REQUIRED`: keep `true` outside controlled development
+- `TARGET_REQUEST_TIMEOUT_MS`: outbound worker request timeout
+- `DATABASE_SSL`: enables verified TLS for PostgreSQL
+
+`NEXT_PUBLIC_API_BASE_URL` is optional. Leave it unset for the normal same-origin `/api/v1` API.
+
+## Source layout
 
 ```text
-1. User creates a load test from the dashboard.
-2. Backend saves the test configuration.
-3. User starts the test.
-4. Controller calculates the required number of workers.
-5. Worker containers are started.
-6. Controller sends test jobs to the queue.
-7. Workers generate traffic against the target application.
-8. Metrics are collected in real time.
-9. Dashboard displays test progress.
-10. Test ends after the configured duration.
-11. Final report is generated.
+src/app/                 Next pages and API route handlers
+src/components/          shared UI
+src/features/            dashboard screens
+src/lib/                 browser API client and types
+src/server/apps/api/     application services and dependency modules
+src/server/apps/worker/  BullMQ worker entry point
+src/server/libs/         database, domain, queue, config, and safety code
+src/server/next/         Next-to-service integration
 ```
 
----
+## Deployment notes
 
-## Final Report
+`Dockerfile` uses Next's standalone production output. `Dockerfile.worker` runs the worker and migration commands from the same package. Run at least one worker alongside the web process; adding more worker replicas increases queue consumption capacity.
 
-At the end of each test, the system generates a report containing:
+Place the self-hosted Next server behind a reverse proxy that terminates TLS, normalizes forwarding headers, and applies infrastructure-level request limits. The application also enforces an in-process per-client limit of 120 API requests per minute.
 
-* Total requests
-* Successful requests
-* Failed requests
-* Average response time
-* Minimum response time
-* Maximum response time
-* 95th percentile response time
-* 99th percentile response time
-* Error rate
-* Throughput
-* Bottleneck observations
-* Recommended improvements
-
-Example report summary:
-
-```text
-The target application handled 8,500 users successfully.
-Failures increased after 9,000 users.
-Average response time exceeded 2 seconds after 7,200 users.
-The database layer appears to be the main bottleneck.
-```
-
----
-
-## Security and Responsible Usage
-
-This system must only be used to test applications, APIs, or services that you own or have permission to test.
-
-Recommended safety features:
-
-* Immediate public access without account registration
-* Domain ownership verification
-* Rate limits
-* Test size limits
-* Abuse detection
-* Audit logs
-* Permission-based access control
-
-Unauthorized load testing can be considered a denial-of-service attack.
-
----
-
-## Future Improvements
-
-* Team accounts and roles
-* Scheduled load tests
-* CI/CD pipeline integration
-* Advanced test scripting
-* Geographic worker distribution
-* WebSocket load testing
-* GraphQL load testing
-* AI-based bottleneck analysis
-* Export reports as PDF
-* Billing and usage limits for SaaS deployment
-
----
-
-## Project Status
-
-This project is currently in the design and development phase.
-
-Backend implementation is maintained in [`backend`](backend/README.md). The current backend branch contains the control-plane API, worker process, initial PostgreSQL migration, Redis job partitioning, target safety controls, health/metrics endpoints, and automated quality gates.
-
-The operator dashboard is maintained in [`frontend`](frontend/README.md). It
-connects directly to the versioned backend API for target verification, test
-configuration, distributed run control, live metrics, and final reports.
-
-Planned development phases:
-
-```text
-Phase 1: Basic test creation and execution
-Phase 2: Worker container support
-Phase 3: Metrics dashboard
-Phase 4: Autoscaling with Kubernetes
-Phase 5: Final reporting and analytics
-Phase 6: Production deployment
-```
-
----
-
-## License
-
-This project is licensed under the MIT License.
-
----
-
-## Author
-
-Developed as a cloud-native software engineering project for distributed load testing, autoscaling, container orchestration, and real-time performance monitoring.
