@@ -4,22 +4,12 @@ import { VerificationMethod } from '@app/config';
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
-import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
 import request from 'supertest';
 import { configureApi } from '../apps/api/src/configure-app';
+import { PUBLIC_WORKSPACE_EMAIL } from '../apps/api/src/workspace/public-workspace.service';
 
 jest.setTimeout(30_000);
-
-interface RegistrationResponse {
-  accessToken: string;
-  user: {
-    id: string;
-    email: string;
-    role: string;
-    passwordHash?: string;
-  };
-}
 
 interface VerificationResponse {
   hostname: string;
@@ -39,12 +29,9 @@ interface ReadinessResponse {
 }
 
 describe('API end-to-end', () => {
-  let app: INestApplication;
+  let app: INestApplication | undefined;
   let server: Server;
-  let dataSource: DataSource;
-  let userId: string | undefined;
-  const email = `api-e2e-${randomUUID()}@example.test`;
-  const password = `Strong-e2e-password-${randomUUID()}`;
+  let dataSource: DataSource | undefined;
 
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
@@ -60,71 +47,41 @@ describe('API end-to-end', () => {
   });
 
   afterAll(async () => {
-    if (userId) {
-      await dataSource.query('DELETE FROM audit_logs WHERE actor_id = $1', [
-        userId,
-      ]);
-      await dataSource.query('DELETE FROM users WHERE id = $1', [userId]);
+    if (!dataSource) {
+      await app?.close();
+      return;
     }
-    await app.close();
+    const [workspace] = await dataSource.query<Array<{ id: string }>>(
+      'SELECT id FROM users WHERE email = $1',
+      [PUBLIC_WORKSPACE_EMAIL],
+    );
+    if (workspace) {
+      await dataSource.query(
+        'DELETE FROM target_verifications WHERE owner_id = $1',
+        [workspace.id],
+      );
+      await dataSource.query('DELETE FROM audit_logs WHERE actor_id = $1', [
+        workspace.id,
+      ]);
+    }
+    await app?.close();
   });
 
   it('reports liveness and readiness', async () => {
-    const live = await request(server)
-      .get('/api/v1/health/live')
-      .expect(200);
+    const live = await request(server).get('/api/v1/health/live').expect(200);
     expect(live.body as unknown).toEqual(
       expect.objectContaining({ status: 'ok' }),
     );
 
-    const ready = await request(server)
-      .get('/api/v1/health/ready')
-      .expect(200);
+    const ready = await request(server).get('/api/v1/health/ready').expect(200);
     const readiness = ready.body as unknown as ReadinessResponse;
     expect(readiness.status).toBe('ok');
     expect(readiness.info.database.status).toBe('up');
   });
 
-  it('rejects unauthenticated access to owned resources', async () => {
-    await request(server).get('/api/v1/tests').expect(401);
-  });
-
-  it('registers, authenticates, and exposes the current account', async () => {
-    const registration = await request(server)
-      .post('/api/v1/auth/register')
-      .send({ email, password })
-      .expect(201);
-
-    const registrationBody = registration.body as unknown as RegistrationResponse;
-    userId = registrationBody.user.id;
-    const accessToken = registrationBody.accessToken;
-    expect(accessToken).toEqual(expect.any(String));
-    expect(registrationBody.user).toEqual(
-      expect.objectContaining({ id: userId, email, role: 'user' }),
-    );
-    expect(registrationBody.user.passwordHash).toBeUndefined();
-
-    const me = await request(server)
-      .get('/api/v1/auth/me')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(200);
-    expect(me.body as unknown).toEqual(
-      expect.objectContaining({ id: userId, email, role: 'user' }),
-    );
-
-    await request(server)
-      .post('/api/v1/auth/login')
-      .send({ email, password: 'incorrect-password' })
-      .expect(401);
-
-    await request(server)
-      .post('/api/v1/auth/login')
-      .send({ email, password })
-      .expect(200);
-
+  it('opens the shared workspace without authentication', async () => {
     const verification = await request(server)
       .post('/api/v1/targets/verifications')
-      .set('Authorization', `Bearer ${accessToken}`)
       .send({
         targetUrl: 'https://8.8.8.8/health',
         method: VerificationMethod.DNS_TXT,
@@ -136,10 +93,14 @@ describe('API end-to-end', () => {
     expect(verificationBody.instructions.recordType).toBe('TXT');
     expect(verificationBody.token).toEqual(expect.any(String));
 
-    await request(server)
-      .get('/api/v1/tests')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(200)
-      .expect([]);
+    await request(server).get('/api/v1/tests').expect(200).expect([]);
+
+    const [workspace] = await dataSource.query<Array<{ email: string }>>(
+      'SELECT email FROM users WHERE email = $1',
+      [PUBLIC_WORKSPACE_EMAIL],
+    );
+    expect(workspace?.email).toBe(PUBLIC_WORKSPACE_EMAIL);
+
+    await request(server).post('/api/v1/auth/register').send({}).expect(404);
   });
 });

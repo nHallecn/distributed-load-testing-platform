@@ -1,18 +1,18 @@
 import {
   FlaskConical,
   Gauge,
-  LogOut,
   Menu,
   PanelLeftClose,
+  Plus,
   ShieldCheck,
+  Sparkles,
   X,
 } from 'lucide-react';
 import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { Logo } from '../components/brand/Logo';
-import { useAuth } from '../auth/useAuth';
-import { Button } from '../components/ui/Button';
+import { ButtonLink } from '../components/ui/ButtonLink';
 
 const navigation = [
   { label: 'Overview', to: '/app', icon: Gauge, end: true },
@@ -22,7 +22,6 @@ const navigation = [
 
 export function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, logout } = useAuth();
   const location = useLocation();
 
   const closeMobile = () => setMobileOpen(false);
@@ -124,25 +123,17 @@ export function AppShell() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden text-right sm:block">
-              <p className="max-w-52 truncate text-xs font-bold text-slate-700">
-                {user?.email}
-              </p>
-              <p className="mt-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-slate-400">
-                {user?.role}
-              </p>
-            </div>
-            <span className="grid size-9 place-items-center rounded-xl bg-ink-900 text-xs font-extrabold uppercase text-signal-400">
-              {user?.email.slice(0, 2)}
+            <span className="hidden items-center gap-2 rounded-full border border-signal-100 bg-signal-50 px-3 py-1.5 text-[0.68rem] font-extrabold uppercase tracking-wider text-signal-600 sm:flex">
+              <Sparkles className="size-3.5" />
+              Free public workspace
             </span>
-            <Button
-              variant="ghost"
-              className="!size-9 !min-h-9 !p-0"
-              aria-label="Sign out"
-              onClick={logout}
+            <ButtonLink
+              to="/app/tests/new"
+              className="!min-h-9 !px-3 text-xs"
+              icon={<Plus className="size-3.5" />}
             >
-              <LogOut className="size-4" />
-            </Button>
+              <span className="hidden sm:inline">New test</span>
+            </ButtonLink>
           </div>
         </header>
 

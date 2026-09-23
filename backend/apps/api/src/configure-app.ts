@@ -32,9 +32,8 @@ export function configureApi(app: INestApplication): string {
   if (config.get<string>('NODE_ENV') !== 'production') {
     const swaggerConfig = new DocumentBuilder()
       .setTitle('Distributed Load Testing API')
-      .setDescription('Control-plane API for authorized distributed load tests')
+      .setDescription('Public control-plane API for authorized distributed load tests')
       .setVersion('0.1.0')
-      .addBearerAuth()
       .build();
     SwaggerModule.setup(
       `${prefix}/docs`,

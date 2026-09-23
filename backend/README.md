@@ -4,7 +4,7 @@ Production-oriented NestJS control plane and distributed worker for the load-tes
 
 ## Services
 
-- `api`: authentication, target verification, test definitions, run lifecycle, reports, health checks, and Prometheus metrics.
+- `api`: public workspace access, target verification, test definitions, run lifecycle, reports, health checks, and Prometheus metrics.
 - `worker`: consumes partitioned BullMQ jobs, generates HTTP traffic, records one-second metric snapshots, and finalizes run summaries.
 - PostgreSQL: durable users, tests, runs, workers, metrics summaries, and audit events.
 - Redis: BullMQ job transport and run-cancellation signals.
@@ -25,12 +25,6 @@ PostgreSQL and Redis are external dependencies. Do not commit their credentials.
 4. Set `DATABASE_SSL=true` for a hosted database that requires TLS.
 5. Create one Redis database. It must support BullMQ commands; a normal Redis 7 instance is sufficient.
 6. Copy its URI into `REDIS_URL`. Use a `rediss://` URI when the provider requires TLS.
-7. Generate a random JWT secret with at least 32 characters. For example:
-
-   ```powershell
-   node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
-   ```
-
 No Prometheus or object-storage credentials are required for this first slice. Prometheus can scrape the API's `/api/v1/metrics` endpoint later.
 
 ## Local configuration
@@ -59,7 +53,7 @@ The API defaults to `http://localhost:5000/api/v1`. OpenAPI documentation is ava
 
 ## Lifecycle
 
-1. Register or log in through `/auth`.
+1. Open the public dashboard; no account or token is required.
 2. Create a DNS TXT or HTTPS-file challenge through `POST /targets/verifications`.
 3. Publish the returned proof at the target domain and call `POST /targets/verifications/:id/verify`.
 4. Create a test through `POST /tests`.
@@ -67,6 +61,9 @@ The API defaults to `http://localhost:5000/api/v1`. OpenAPI documentation is ava
 6. Read `/runs/:id/metrics` while it runs and `/runs/:id/report` when it ends.
 
 The worker count is `ceil(virtualUsers / WORKER_CAPACITY)`. One independently retryable queue job is created per worker partition.
+
+Public requests map to one internal workspace identity so relational ownership,
+target verification, and audit records remain intact without a signup flow.
 
 ## Safety defaults
 
@@ -93,8 +90,8 @@ npm run lint
 `test:integration` uses the configured PostgreSQL and Redis services. It verifies
 migration state, checks entity/schema drift, exercises database constraints
 inside a rolled-back transaction, and uses an isolated temporary BullMQ queue.
-`test:e2e` boots the real Nest application and exercises health, authentication,
-authorization, target-verification challenge creation, and database cleanup.
+`test:e2e` boots the real Nest application and exercises health, public workspace
+access, target-verification challenge creation, and database cleanup.
 
 ## Containers
 

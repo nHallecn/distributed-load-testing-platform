@@ -139,6 +139,109 @@
   animation: signal-pulse 2.4s ease-in-out infinite;
 }
 
+@keyframes hero-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes hero-breathe {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(0.96);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.04);
+    opacity: 1;
+  }
+}
+
+@keyframes hero-spin {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes hero-icon-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes hero-packet-one {
+  0%,
+  100% {
+    transform: translate(0, 0);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(150px, -92px);
+    opacity: 1;
+  }
+}
+
+@keyframes hero-packet-two {
+  0%,
+  100% {
+    transform: translate(0, 0);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate(-120px, 95px);
+    opacity: 1;
+  }
+}
+
+.hero-surface {
+  isolation: isolate;
+}
+
+.hero-glow-left {
+  animation: hero-float 8s ease-in-out infinite;
+}
+
+.hero-glow-right {
+  animation: hero-float 9s ease-in-out -3s infinite reverse;
+}
+
+.hero-core {
+  animation: hero-breathe 3.2s ease-in-out infinite;
+}
+
+.hero-orbit-outer {
+  animation: hero-spin 28s linear infinite;
+}
+
+.hero-orbit-inner {
+  animation: hero-spin 20s linear infinite reverse;
+}
+
+.hero-telemetry {
+  animation: hero-float 4.8s ease-in-out infinite;
+}
+
+.hero-packet-one {
+  animation: hero-packet-one 4.5s ease-in-out infinite;
+}
+
+.hero-packet-two {
+  animation: hero-packet-two 5.2s ease-in-out -1.5s infinite;
+}
+
+.hero-orbit-icon {
+  animation: hero-icon-spin 10s linear infinite;
+  transform-origin: center;
+}
+
+.hero-cta {
+  box-shadow: 0 14px 35px rgb(45 212 167 / 0.15);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -1,21 +1,10 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { ProtectedRoute } from './auth/ProtectedRoute';
 import { AppShell } from './layouts/AppShell';
 
 const DashboardPage = lazy(() =>
   import('./pages/dashboard/DashboardPage').then((module) => ({
     default: module.DashboardPage,
-  })),
-);
-const LoginPage = lazy(() =>
-  import('./pages/auth/LoginPage').then((module) => ({
-    default: module.LoginPage,
-  })),
-);
-const RegisterPage = lazy(() =>
-  import('./pages/auth/RegisterPage').then((module) => ({
-    default: module.RegisterPage,
   })),
 );
 const TestsPage = lazy(() =>
@@ -54,18 +43,16 @@ export function App() {
     <Suspense fallback={<RouteLoading />}>
       <Routes>
         <Route path="/" element={<Navigate to="/app" replace />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/login" element={<Navigate to="/app" replace />} />
+        <Route path="/register" element={<Navigate to="/app" replace />} />
 
-        <Route element={<ProtectedRoute />}>
-          <Route path="/app" element={<AppShell />}>
-            <Route index element={<DashboardPage />} />
-            <Route path="tests" element={<TestsPage />} />
-            <Route path="tests/new" element={<NewTestPage />} />
-            <Route path="tests/:id" element={<TestDetailPage />} />
-            <Route path="targets" element={<TargetsPage />} />
-            <Route path="runs/:id" element={<RunPage />} />
-          </Route>
+        <Route path="/app" element={<AppShell />}>
+          <Route index element={<DashboardPage />} />
+          <Route path="tests" element={<TestsPage />} />
+          <Route path="tests/new" element={<NewTestPage />} />
+          <Route path="tests/:id" element={<TestDetailPage />} />
+          <Route path="targets" element={<TargetsPage />} />
+          <Route path="runs/:id" element={<RunPage />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />
