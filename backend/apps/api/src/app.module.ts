@@ -7,13 +7,13 @@ import {
   ThrottlerModule,
 } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
-import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
 import { LoadTestsModule } from './load-tests/load-tests.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { RunsModule } from './runs/runs.module';
 import { TargetsModule } from './targets/targets.module';
 import { AuditModule } from './audit/audit.module';
+import { WorkspaceModule } from './workspace/workspace.module';
 
 @Module({
   imports: [
@@ -30,7 +30,7 @@ import { AuditModule } from './audit/audit.module';
     ]),
     DatabaseModule,
     AuditModule,
-    AuthModule,
+    WorkspaceModule,
     TargetsModule,
     LoadTestsModule,
     RunsModule,

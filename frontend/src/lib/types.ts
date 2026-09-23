@@ -1,4 +1,3 @@
-export type UserRole = 'user' | 'admin';
 export type HttpMethod =
   | 'GET'
   | 'POST'
@@ -17,18 +16,6 @@ export type RunStatus =
   | 'failed'
   | 'cancelled';
 export type VerificationMethod = 'dns_txt' | 'http_file';
-
-export interface User {
-  id: string;
-  email: string;
-  role: UserRole;
-}
-
-export interface AuthResponse {
-  accessToken: string;
-  tokenType: 'Bearer';
-  user: User;
-}
 
 export interface StopConditions {
   maxErrorRatePercent?: number;

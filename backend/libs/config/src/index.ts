@@ -9,8 +9,6 @@ export const environmentSchema = Joi.object({
   CORS_ORIGINS: Joi.string().default('http://localhost:3000'),
   DATABASE_URL: Joi.string().uri({ scheme: ['postgresql', 'postgres'] }).required(),
   REDIS_URL: Joi.string().uri({ scheme: ['redis', 'rediss'] }).required(),
-  JWT_SECRET: Joi.string().min(32).required(),
-  JWT_EXPIRES_IN: Joi.string().default('15m'),
   WORKER_QUEUE_NAME: Joi.string().default('load-test-jobs'),
   WORKER_CAPACITY: Joi.number().integer().min(1).default(500),
   MAX_VIRTUAL_USERS_PER_RUN: Joi.number().integer().min(1).default(10_000),
@@ -20,12 +18,6 @@ export const environmentSchema = Joi.object({
   HEALTH_MAX_HEAP_MB: Joi.number().integer().min(128).default(1_024),
   DATABASE_SSL: Joi.boolean().truthy('true').falsy('false').default(false),
 });
-
-export interface AuthenticatedUser {
-  id: string;
-  email: string;
-  role: UserRole;
-}
 
 export enum UserRole {
   USER = 'user',

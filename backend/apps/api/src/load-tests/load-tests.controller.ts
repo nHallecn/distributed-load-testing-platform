@@ -5,40 +5,32 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
-  UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { AuthenticatedUser } from '@app/config';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { CurrentUser } from '../common/current-user.decorator';
+import { ApiTags } from '@nestjs/swagger';
+import { PublicWorkspaceService } from '../workspace/public-workspace.service';
 import { CreateLoadTestDto } from './dto';
 import { LoadTestsService } from './load-tests.service';
 
 @ApiTags('load tests')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('tests')
 export class LoadTestsController {
-  constructor(private readonly service: LoadTestsService) {}
+  constructor(
+    private readonly service: LoadTestsService,
+    private readonly workspace: PublicWorkspaceService,
+  ) {}
 
   @Post()
-  create(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: CreateLoadTestDto,
-  ) {
-    return this.service.create(user.id, dto);
+  async create(@Body() dto: CreateLoadTestDto) {
+    return this.service.create(await this.workspace.ownerId(), dto);
   }
 
   @Get()
-  list(@CurrentUser() user: AuthenticatedUser) {
-    return this.service.list(user.id);
+  async list() {
+    return this.service.list(await this.workspace.ownerId());
   }
 
   @Get(':id')
-  get(
-    @CurrentUser() user: AuthenticatedUser,
-    @Param('id', ParseUUIDPipe) id: string,
-  ) {
-    return this.service.getOwned(user.id, id);
+  async get(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.getOwned(await this.workspace.ownerId(), id);
   }
 }
