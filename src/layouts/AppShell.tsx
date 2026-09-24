@@ -4,18 +4,17 @@ import {
   FlaskConical,
   Gauge,
   Menu,
-  PanelLeftClose,
   Plus,
   ShieldCheck,
   Sparkles,
   X,
 } from 'lucide-react';
+import { clsx } from 'clsx';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, type PropsWithChildren } from 'react';
-import { clsx } from 'clsx';
-import { Logo } from '../components/brand/Logo';
-import { ButtonLink } from '../components/ui/ButtonLink';
+import { Logo } from '@/components/brand/Logo';
+import { ButtonLink } from '@/components/ui/ButtonLink';
 
 const navigation = [
   { label: 'Overview', to: '/app', icon: Gauge, end: true },
@@ -27,114 +26,92 @@ export function AppShell({ children }: PropsWithChildren) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
 
-  const closeMobile = () => setMobileOpen(false);
-
   return (
-    <div className="min-h-screen">
-      {mobileOpen ? (
-        <button
-          aria-label="Close navigation"
-          className="fixed inset-0 z-30 bg-ink-950/45 backdrop-blur-sm lg:hidden"
-          onClick={closeMobile}
-        />
-      ) : null}
+    <div className="min-h-screen bg-[#f5f7f5]">
+      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-[#f5f7f5]/88 backdrop-blur-2xl">
+        <div className="mx-auto flex h-[76px] max-w-[1460px] items-center justify-between px-4 sm:px-7 lg:px-10">
+          <div className="flex items-center gap-9">
+            <Link href="/" aria-label="LoadGrid home">
+              <Logo compact darkText />
+            </Link>
 
-      <aside
-        className={clsx(
-          'fixed inset-y-0 left-0 z-40 flex w-[272px] flex-col bg-ink-950 text-white transition-transform duration-200 lg:translate-x-0',
-          mobileOpen ? 'translate-x-0' : '-translate-x-full',
-        )}
-      >
-        <div className="grid-lines absolute inset-0 opacity-25" />
-        <div className="relative flex h-[76px] items-center justify-between border-b border-white/[0.07] px-6">
-          <Logo compact />
-          <button
-            aria-label="Close navigation"
-            className="rounded-lg p-2 text-slate-500 hover:bg-white/5 hover:text-white lg:hidden"
-            onClick={closeMobile}
-          >
-            <X className="size-5" />
-          </button>
-        </div>
-
-        <nav className="relative flex-1 px-4 py-6">
-          <p className="mb-3 px-3 text-[0.62rem] font-extrabold uppercase tracking-[0.16em] text-slate-600">
-            Control plane
-          </p>
-          <div className="space-y-1.5">
-            {navigation.map(({ label, to, icon: Icon, end }) => {
-              const isActive = end ? pathname === to : pathname.startsWith(to);
-              return (
-                <Link
-                  key={to}
-                  href={to}
-                  onClick={closeMobile}
-                  className={clsx(
-                    'group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold',
-                    isActive
-                      ? 'bg-white/[0.09] text-white'
-                      : 'text-slate-400 hover:bg-white/[0.045] hover:text-slate-200',
-                  )}
-                >
-                  <span
+            <nav className="hidden items-center gap-1 rounded-full border border-slate-200/80 bg-white/80 p-1 shadow-sm lg:flex">
+              {navigation.map(({ label, to, end }) => {
+                const active = end ? pathname === to : pathname.startsWith(to);
+                return (
+                  <Link
+                    key={to}
+                    href={to}
                     className={clsx(
-                      'grid size-8 place-items-center rounded-lg',
-                      isActive
-                        ? 'bg-signal-400 text-ink-950'
-                        : 'bg-white/[0.04] text-slate-500 group-hover:text-slate-300',
+                      'rounded-full px-4 py-2 text-xs font-bold',
+                      active
+                        ? 'bg-ink-950 text-white shadow-sm'
+                        : 'text-slate-500 hover:bg-slate-100 hover:text-ink-950',
                     )}
                   >
-                    <Icon className="size-4" strokeWidth={2.2} />
-                  </span>
-                  {label}
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
-
-        <div className="relative m-4 rounded-2xl border border-white/[0.08] bg-white/[0.035] p-4">
-          <p className="text-xs font-bold text-white">Safety is active</p>
-          <p className="mt-1.5 text-[0.7rem] leading-5 text-slate-500">
-            Private networks and unverified targets are blocked.
-          </p>
-        </div>
-      </aside>
-
-      <div className="lg:pl-[272px]">
-        <header className="sticky top-0 z-20 flex h-[76px] items-center justify-between border-b border-slate-200/80 bg-[#f4f6fa]/90 px-4 backdrop-blur-xl sm:px-7 lg:px-9">
-          <div className="flex items-center gap-3">
-            <button
-              aria-label="Open navigation"
-              className="rounded-xl border border-slate-200 bg-white p-2.5 text-slate-600 shadow-sm lg:hidden"
-              onClick={() => setMobileOpen(true)}
-            >
-              <Menu className="size-4" />
-            </button>
-            <div className="hidden items-center gap-2 text-xs font-semibold text-slate-400 sm:flex">
-              <PanelLeftClose className="size-4" />
-              <span>
-                {pathname.includes('/runs/') ? 'Run monitor' : 'Workspace'}
-              </span>
-            </div>
+                    {label}
+                  </Link>
+                );
+              })}
+            </nav>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="hidden items-center gap-2 rounded-full border border-signal-100 bg-signal-50 px-3 py-1.5 text-[0.68rem] font-extrabold uppercase tracking-wider text-signal-600 sm:flex">
-              <Sparkles className="size-3.5" />
-              Free public workspace
+          <div className="flex items-center gap-2.5">
+            <span className="hidden items-center gap-2 text-[0.68rem] font-extrabold uppercase tracking-[0.12em] text-slate-400 sm:flex">
+              <span className="signal-pulse size-1.5 rounded-full bg-signal-500" />
+              Public workspace
             </span>
             <ButtonLink
               to="/app/tests/new"
-              className="!min-h-9 !px-3 text-xs"
+              className="!min-h-10 !rounded-full !px-4 text-xs shadow-[0_10px_24px_rgba(21,184,138,0.14)]"
               icon={<Plus className="size-3.5" />}
             >
-              <span className="hidden sm:inline">New test</span>
+              New test
             </ButtonLink>
+            <button
+              type="button"
+              aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}
+              aria-expanded={mobileOpen}
+              className="grid size-10 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm lg:hidden"
+              onClick={() => setMobileOpen((open) => !open)}
+            >
+              {mobileOpen ? <X className="size-4" /> : <Menu className="size-4" />}
+            </button>
           </div>
-        </header>
+        </div>
 
-        <main className="mx-auto max-w-[1440px] px-4 py-7 sm:px-7 lg:px-9 lg:py-9">
+        {mobileOpen ? (
+          <div className="workspace-menu border-t border-slate-200/80 bg-white px-4 py-4 shadow-xl lg:hidden">
+            <nav className="mx-auto grid max-w-[720px] gap-2 sm:grid-cols-3">
+              {navigation.map(({ label, to, icon: Icon, end }) => {
+                const active = end ? pathname === to : pathname.startsWith(to);
+                return (
+                  <Link
+                    key={to}
+                    href={to}
+                    onClick={() => setMobileOpen(false)}
+                    className={clsx(
+                      'flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold',
+                      active ? 'bg-ink-950 text-white' : 'bg-slate-50 text-slate-600',
+                    )}
+                  >
+                    <Icon className={clsx('size-4', active && 'text-signal-400')} />
+                    {label}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        ) : null}
+      </header>
+
+      <div className="relative">
+        <div className="workspace-backdrop pointer-events-none absolute inset-x-0 top-0 h-[520px]" />
+        <main className="relative mx-auto max-w-[1460px] px-4 py-7 sm:px-7 lg:px-10 lg:py-10">
+          <div className="mb-7 flex items-center gap-2 text-[0.66rem] font-extrabold uppercase tracking-[0.14em] text-slate-400 lg:hidden">
+            <Sparkles className="size-3.5 text-violet-500" />
+            {pathname.includes('/runs/') ? 'Live run monitor' : 'LoadGrid workspace'}
+          </div>
           {children}
         </main>
       </div>

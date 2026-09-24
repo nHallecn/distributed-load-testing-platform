@@ -242,6 +242,177 @@
   box-shadow: 0 14px 35px rgb(45 212 167 / 0.15);
 }
 
+.landing-grid {
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.035) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: linear-gradient(to bottom, black, transparent 92%);
+}
+
+.chart-grid {
+  background-image:
+    linear-gradient(rgb(148 163 184 / 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(148 163 184 / 0.07) 1px, transparent 1px);
+  background-size: 42px 42px;
+}
+
+.workspace-backdrop {
+  background:
+    radial-gradient(circle at 14% 0%, rgb(117 103 248 / 0.08), transparent 25rem),
+    radial-gradient(circle at 82% 5%, rgb(45 212 167 / 0.08), transparent 28rem);
+}
+
+@keyframes landing-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes landing-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(24px, -18px, 0) scale(1.08);
+  }
+}
+
+@keyframes console-scan {
+  from {
+    transform: translateX(-130%);
+  }
+  to {
+    transform: translateX(520%);
+  }
+}
+
+@keyframes line-draw {
+  from {
+    stroke-dashoffset: 1100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes bar-grow {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--bar-width);
+  }
+}
+
+@keyframes float-card {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-9px) rotate(1deg);
+  }
+}
+
+@keyframes request-one {
+  0% {
+    left: 8%;
+    top: 78%;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    left: 88%;
+    top: 18%;
+    opacity: 0;
+  }
+}
+
+@keyframes request-two {
+  0% {
+    left: 20%;
+    top: 68%;
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    left: 78%;
+    top: 26%;
+    opacity: 0;
+  }
+}
+
+@keyframes menu-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.landing-reveal {
+  animation: landing-reveal 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.landing-reveal-delay {
+  animation-delay: 160ms;
+}
+
+.landing-aurora-one {
+  animation: landing-drift 12s ease-in-out infinite;
+}
+
+.landing-aurora-two {
+  animation: landing-drift 15s ease-in-out -5s infinite reverse;
+}
+
+.console-scan,
+.dashboard-scan {
+  animation: console-scan 5.5s linear infinite;
+}
+
+.console-line,
+.dashboard-line {
+  stroke-dasharray: 1100;
+  stroke-dashoffset: 1100;
+  animation: line-draw 2.2s cubic-bezier(0.22, 1, 0.36, 1) 500ms forwards;
+}
+
+.console-bar {
+  width: 0;
+  animation: bar-grow 900ms cubic-bezier(0.22, 1, 0.36, 1) 800ms forwards;
+}
+
+.console-float-card {
+  animation: float-card 5s ease-in-out infinite;
+}
+
+.request-particle-one {
+  animation: request-one 3.4s ease-in-out infinite;
+}
+
+.request-particle-two {
+  animation: request-two 4.2s ease-in-out 1.2s infinite;
+}
+
+.workspace-menu {
+  animation: menu-enter 180ms ease-out both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -28,11 +28,10 @@ describe('DashboardPage', () => {
     );
 
     expect(
-      screen.getByRole('heading', { name: /find the limit.*before users do/i }),
+      screen.getByRole('heading', { name: /see the pressure.*find the limit/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText('No signup · Free to use')).toBeInTheDocument();
     expect(
-      screen.getByRole('link', { name: /create a load test/i }),
+      screen.getByRole('link', { name: /create load test/i }),
     ).toHaveAttribute('href', '/app/tests/new');
     expect(await screen.findByText('No test profiles yet')).toBeInTheDocument();
   });
