@@ -1,0 +1,63 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: loadtesting
+      POSTGRES_USER: loadtest
+      POSTGRES_PASSWORD: loadtest
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U loadtest -d loadtesting"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:8-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    command: ["npm", "run", "migration:run"]
+    environment: &runtime-environment
+      DATABASE_URL: postgresql://loadtest:loadtest@postgres:5432/loadtesting
+      REDIS_URL: redis://redis:6379
+      TARGET_VERIFICATION_REQUIRED: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment: *runtime-environment
+    ports:
+      - "3000:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    environment: *runtime-environment
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+
