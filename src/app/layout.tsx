@@ -3,9 +3,9 @@ import { QueryProvider } from '@/components/providers/QueryProvider';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'LoadGrid — Distributed load testing',
+  title: 'LoadGrid — Find the limit before users do',
   description:
-    'Launch distributed load tests, monitor live performance, and protect verified targets.',
+    'Run distributed load tests, watch performance move in real time, and find bottlenecks before production traffic does.',
 };
 
 export default function RootLayout({

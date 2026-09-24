@@ -2,38 +2,31 @@
 
 import { useQuery } from '@tanstack/react-query';
 import {
-  Activity,
   ArrowRight,
   ArrowUpRight,
   CheckCircle2,
   FlaskConical,
   Gauge,
-  Orbit,
   Plus,
   Radio,
   ServerCog,
   ShieldCheck,
+  Sparkles,
+  Zap,
 } from 'lucide-react';
 import Link from 'next/link';
-import { api } from '../../lib/api';
-import { formatCompactNumber, formatDate } from '../../lib/format';
-import { ButtonLink } from '../../components/ui/ButtonLink';
-import { EmptyState } from '../../components/ui/EmptyState';
-import { ErrorNotice } from '../../components/ui/ErrorNotice';
-import { StatusBadge } from '../../components/ui/StatusBadge';
+import { api } from '@/lib/api';
+import { formatCompactNumber, formatDate } from '@/lib/format';
+import { ButtonLink } from '@/components/ui/ButtonLink';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorNotice } from '@/components/ui/ErrorNotice';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 
 export function DashboardPage() {
-  const tests = useQuery({
-    queryKey: ['tests'],
-    queryFn: api.listTests,
-  });
-
+  const tests = useQuery({ queryKey: ['tests'], queryFn: api.listTests });
   const items = tests.data ?? [];
   const ready = items.filter((test) => test.status === 'ready').length;
-  const plannedUsers = items.reduce(
-    (total, test) => total + test.virtualUsers,
-    0,
-  );
+  const plannedUsers = items.reduce((total, test) => total + test.virtualUsers, 0);
   const workers = items.reduce(
     (total, test) => total + Math.ceil(test.virtualUsers / 500),
     0,
@@ -41,74 +34,97 @@ export function DashboardPage() {
 
   return (
     <>
-      <DashboardHero />
+      <section className="mb-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+        <div>
+          <div className="mb-3 flex items-center gap-2 text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-violet-600">
+            <Sparkles className="size-3.5" />
+            Performance workspace
+          </div>
+          <h1 className="text-3xl font-[830] tracking-[-0.055em] text-ink-950 sm:text-5xl">
+            See the pressure.<br className="hidden sm:block" /> Find the limit.
+          </h1>
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-500 sm:text-base">
+            Configure distributed traffic, watch the system respond, and leave every run with a clear answer.
+          </p>
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <ButtonLink
+            to="/app/targets"
+            variant="secondary"
+            className="!min-h-12 !rounded-full !px-5"
+            icon={<ShieldCheck className="size-4" />}
+          >
+            Verify target
+          </ButtonLink>
+          <ButtonLink
+            to="/app/tests/new"
+            className="!min-h-12 !rounded-full !px-5"
+            icon={<Plus className="size-4" />}
+          >
+            Create load test
+          </ButtonLink>
+        </div>
+      </section>
 
       {tests.isError ? (
-        <div className="mb-6">
-          <ErrorNotice message={tests.error.message} />
-        </div>
+        <div className="mb-6"><ErrorNotice message={tests.error.message} /></div>
       ) : null}
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <LiveLoadVisual />
+
+      <section className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
           {
             label: 'Test profiles',
             value: tests.isLoading ? '—' : items.length.toString(),
             note: tests.isLoading ? 'loading profiles' : `${ready} ready to run`,
             icon: FlaskConical,
-            tone: 'bg-violet-50 text-violet-600',
+            tone: 'bg-violet-100 text-violet-700',
           },
           {
             label: 'Planned capacity',
             value: tests.isLoading ? '—' : formatCompactNumber(plannedUsers),
             note: 'virtual users',
             icon: Gauge,
-            tone: 'bg-signal-50 text-signal-600',
+            tone: 'bg-emerald-100 text-emerald-700',
           },
           {
             label: 'Worker demand',
             value: tests.isLoading ? '—' : workers.toString(),
             note: 'at 500 users each',
             icon: ServerCog,
-            tone: 'bg-sky-50 text-sky-600',
+            tone: 'bg-sky-100 text-sky-700',
           },
           {
-            label: 'Safety controls',
+            label: 'Safety layer',
             value: 'Active',
-            note: 'verification required',
+            note: 'ownership required',
             icon: ShieldCheck,
-            tone: 'bg-amber-50 text-amber-600',
+            tone: 'bg-amber-100 text-amber-700',
           },
         ].map(({ label, value, note, icon: Icon, tone }) => (
-          <article className="panel p-5" key={label}>
-            <div className="flex items-start justify-between">
+          <article className="rounded-[1.4rem] border border-slate-200/80 bg-white/90 p-5 shadow-[0_14px_45px_rgba(15,23,42,0.045)]" key={label}>
+            <div className="flex items-center justify-between">
               <p className="text-xs font-bold text-slate-500">{label}</p>
-              <span className={`grid size-9 place-items-center rounded-xl ${tone}`}>
-                <Icon className="size-4" />
-              </span>
+              <span className={`grid size-9 place-items-center rounded-xl ${tone}`}><Icon className="size-4" /></span>
             </div>
-            <p className="mt-4 text-2xl font-[780] tracking-[-0.04em] text-ink-950">
-              {value}
-            </p>
-            <p className="mt-1 text-xs text-slate-400">{note}</p>
+            <div className="mt-5 flex items-end justify-between gap-3">
+              <p className="text-3xl font-[800] tracking-[-0.05em] text-ink-950">{value}</p>
+              <p className="pb-1 text-[0.68rem] text-slate-400">{note}</p>
+            </div>
           </article>
         ))}
       </section>
 
-      <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.72fr)]">
+      <section className="mt-8 grid gap-7 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.68fr)]">
         <div>
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-4 flex items-end justify-between">
             <div>
-              <p className="text-sm font-bold text-ink-950">Recent profiles</p>
-              <p className="mt-1 text-xs text-slate-400">
-                Reusable traffic configurations
-              </p>
+              <p className="text-lg font-[780] tracking-[-0.03em] text-ink-950">Recent test profiles</p>
+              <p className="mt-1 text-xs text-slate-400">Reusable traffic configurations</p>
             </div>
             {items.length ? (
-              <Link
-                href="/app/tests"
-                className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-ink-950"
-              >
+              <Link href="/app/tests" className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-ink-950">
                 View all <ArrowRight className="size-3.5" />
               </Link>
             ) : null}
@@ -116,9 +132,7 @@ export function DashboardPage() {
 
           {tests.isLoading ? (
             <div className="panel space-y-4 p-5" aria-label="Loading test profiles">
-              {[0, 1, 2].map((item) => (
-                <div className="h-12 animate-pulse rounded-xl bg-slate-100" key={item} />
-              ))}
+              {[0, 1, 2].map((item) => <div className="h-12 animate-pulse rounded-xl bg-slate-100" key={item} />)}
             </div>
           ) : null}
 
@@ -127,44 +141,34 @@ export function DashboardPage() {
               icon={FlaskConical}
               title="No test profiles yet"
               description="Verify a target, then create your first reusable traffic profile."
-              action={
-                <ButtonLink to="/app/targets" variant="secondary">
-                  Verify a target
-                </ButtonLink>
-              }
+              action={<ButtonLink to="/app/tests/new">Create your first test</ButtonLink>}
             />
           ) : null}
 
           {items.length ? (
-            <div className="panel overflow-hidden">
+            <div className="overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-white shadow-[0_14px_45px_rgba(15,23,42,0.045)]">
               {items.slice(0, 5).map((test, index) => (
                 <Link
                   key={test.id}
                   href={`/app/tests/${test.id}`}
                   className="group flex items-center justify-between gap-4 px-5 py-4 hover:bg-slate-50/80"
-                  style={{
-                    borderTop: index ? '1px solid rgb(241 245 249)' : undefined,
-                  }}
+                  style={{ borderTop: index ? '1px solid rgb(241 245 249)' : undefined }}
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2.5">
-                      <p className="truncate text-sm font-bold text-slate-800">
-                        {test.name}
-                      </p>
+                      <p className="truncate text-sm font-bold text-slate-800">{test.name}</p>
                       <StatusBadge status={test.status} />
                     </div>
                     <p className="mt-1.5 truncate text-xs text-slate-400">
-                      <span className="font-bold text-slate-500">{test.method}</span>{' '}
-                      {test.targetUrl}
+                      <span className="font-bold text-violet-600">{test.method}</span>{' '}{test.targetUrl}
                     </p>
                   </div>
-                  <div className="hidden shrink-0 text-right sm:block">
-                    <p className="text-xs font-bold text-slate-600">
-                      {formatCompactNumber(test.virtualUsers)} users
-                    </p>
-                    <p className="mt-1 text-[0.68rem] text-slate-400">
-                      {formatDate(test.createdAt)}
-                    </p>
+                  <div className="hidden shrink-0 items-center gap-5 sm:flex">
+                    <div className="text-right">
+                      <p className="text-xs font-bold text-slate-600">{formatCompactNumber(test.virtualUsers)} users</p>
+                      <p className="mt-1 text-[0.68rem] text-slate-400">{formatDate(test.createdAt)}</p>
+                    </div>
+                    <ArrowUpRight className="size-4 text-slate-300 group-hover:text-slate-700" />
                   </div>
                 </Link>
               ))}
@@ -172,152 +176,93 @@ export function DashboardPage() {
           ) : null}
         </div>
 
-        <aside className="relative overflow-hidden rounded-2xl bg-ink-950 p-6 text-white shadow-panel">
-          <div className="grid-lines absolute inset-0 opacity-40" />
-          <div className="relative">
-            <span className="grid size-10 place-items-center rounded-xl bg-signal-400 text-ink-950">
-              <ShieldCheck className="size-4" />
-            </span>
-            <p className="eyebrow mt-6 text-signal-400">Recommended workflow</p>
-            <h2 className="mt-2 text-xl font-bold tracking-[-0.03em]">
-              Verify before you generate.
-            </h2>
-            <p className="mt-3 text-sm leading-6 text-slate-400">
-              Domain ownership is the first gate. Once verified, profiles can be
-              safely reused for repeatable regression testing.
-            </p>
-            <ol className="mt-6 space-y-3">
-              {['Verify target ownership', 'Define the load profile', 'Run and watch signals'].map(
-                (step, index) => (
-                  <li
-                    className="flex items-center gap-3 text-xs font-semibold text-slate-300"
-                    key={step}
-                  >
-                    <span className="grid size-6 place-items-center rounded-full border border-white/10 bg-white/5 text-[0.65rem] text-signal-400">
-                      {index + 1}
-                    </span>
-                    {step}
-                  </li>
-                ),
-              )}
-            </ol>
-            <Link
-              href="/app/targets"
-              className="mt-7 inline-flex items-center gap-2 text-xs font-bold text-signal-400 hover:text-signal-100"
-            >
-              Open target access <ArrowRight className="size-3.5" />
-            </Link>
+        <aside className="rounded-[1.4rem] border border-slate-200/80 bg-white p-6 shadow-[0_14px_45px_rgba(15,23,42,0.045)]">
+          <p className="eyebrow text-violet-600">A safe first run</p>
+          <h2 className="mt-3 text-xl font-[780] tracking-[-0.035em] text-ink-950">From target to insight.</h2>
+          <div className="mt-7 space-y-6">
+            {[
+              ['01', 'Verify ownership', 'Prove control of the hostname.'],
+              ['02', 'Shape the traffic', 'Set users, duration, and thresholds.'],
+              ['03', 'Watch the signals', 'Follow live performance and errors.'],
+            ].map(([number, title, copy], index) => (
+              <div className="relative flex gap-4" key={number}>
+                {index < 2 ? <span className="absolute left-[17px] top-9 h-9 w-px bg-slate-200" /> : null}
+                <span className="relative grid size-9 shrink-0 place-items-center rounded-full bg-slate-100 font-mono text-[0.62rem] font-bold text-slate-500">{number}</span>
+                <div><p className="text-sm font-bold text-slate-800">{title}</p><p className="mt-1 text-xs leading-5 text-slate-400">{copy}</p></div>
+              </div>
+            ))}
           </div>
+          <Link href="/app/targets" className="mt-8 inline-flex items-center gap-2 text-xs font-extrabold text-signal-600 hover:text-signal-500">
+            Verify your target <ArrowRight className="size-3.5" />
+          </Link>
         </aside>
       </section>
     </>
   );
 }
 
-function DashboardHero() {
+function LiveLoadVisual() {
   return (
-    <section className="hero-surface relative mb-7 overflow-hidden rounded-[1.75rem] bg-ink-950 text-white shadow-[0_28px_80px_rgba(11,16,32,0.2)]">
-      <div className="grid-lines absolute inset-0 opacity-35" />
-      <div className="hero-glow hero-glow-left absolute -left-32 -top-36 size-[30rem] rounded-full bg-violet-500/25 blur-[110px]" />
-      <div className="hero-glow hero-glow-right absolute -bottom-48 right-0 size-[32rem] rounded-full bg-signal-400/20 blur-[120px]" />
+    <section className="dashboard-motion relative overflow-hidden rounded-[1.7rem] bg-ink-950 text-white shadow-[0_28px_80px_rgba(11,16,32,0.16)]">
+      <div className="grid-lines absolute inset-0 opacity-40" />
+      <div className="absolute -right-24 -top-32 size-96 rounded-full bg-violet-500/20 blur-[120px]" />
+      <div className="absolute -bottom-40 left-1/3 size-96 rounded-full bg-signal-400/10 blur-[120px]" />
 
-      <div className="relative grid min-h-[480px] items-center gap-12 px-6 py-12 sm:px-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:px-12 lg:py-14">
-        <div className="max-w-2xl">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-signal-400 backdrop-blur-md">
-            <span className="signal-pulse size-1.5 rounded-full bg-signal-400" />
-            No signup · Free to use
+      <div className="relative grid min-h-[400px] lg:grid-cols-[250px_1fr_230px]">
+        <div className="border-b border-white/[0.07] p-6 lg:border-b-0 lg:border-r lg:p-7">
+          <div className="flex items-center justify-between lg:block">
+            <div>
+              <p className="flex items-center gap-2 text-[0.65rem] font-extrabold uppercase tracking-[0.14em] text-signal-400">
+                <Radio className="size-3.5" /> Live simulation
+              </p>
+              <h2 className="mt-3 text-xl font-[780] tracking-[-0.035em]">Checkout API</h2>
+              <p className="mt-1 text-xs text-slate-500">10,000 virtual users</p>
+            </div>
+            <span className="rounded-full border border-signal-400/20 bg-signal-400/10 px-2.5 py-1 text-[0.62rem] font-bold text-signal-400 lg:mt-5 lg:inline-flex">Running</span>
           </div>
-          <h1 className="max-w-[720px] text-[2.8rem] font-[820] leading-[0.98] tracking-[-0.06em] sm:text-[4rem] lg:text-[4.45rem]">
-            Find the limit.
-            <span className="block text-slate-500">Before users do.</span>
-          </h1>
-          <p className="mt-6 max-w-xl text-sm leading-7 text-slate-400 sm:text-base">
-            Launch distributed load tests, watch performance signals move in
-            real time, and turn every run into a confident engineering decision.
-          </p>
-
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <ButtonLink
-              to="/app/tests/new"
-              className="hero-cta !min-h-12 !rounded-xl !px-5"
-              icon={<Plus className="size-4" />}
-            >
-              Create a load test
-            </ButtonLink>
-            <ButtonLink
-              to="/app/targets"
-              variant="ghost"
-              className="!min-h-12 !rounded-xl !border-white/10 !bg-white/[0.04] !px-5 !text-slate-200 hover:!bg-white/[0.08] hover:!text-white"
-              icon={<ShieldCheck className="size-4" />}
-            >
-              Verify a target
-            </ButtonLink>
-          </div>
-
-          <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-[0.7rem] font-semibold text-slate-500">
-            {['Public workspace', 'Live metrics', 'Safety guardrails'].map((item) => (
-              <span className="flex items-center gap-2" key={item}>
-                <CheckCircle2 className="size-3.5 text-signal-400" />
-                {item}
-              </span>
+          <div className="mt-8 hidden space-y-3 lg:block">
+            {['Resolve target', 'Warm workers', 'Ramp traffic', 'Capture metrics'].map((step, index) => (
+              <div className="flex items-center gap-3" key={step}>
+                <span className={`grid size-6 place-items-center rounded-full text-[0.6rem] font-bold ${index < 3 ? 'bg-signal-400 text-ink-950' : 'border border-white/10 bg-white/5 text-slate-500'}`}>
+                  {index < 3 ? <CheckCircle2 className="size-3.5" /> : index + 1}
+                </span>
+                <span className={`text-xs font-semibold ${index < 3 ? 'text-slate-300' : 'text-slate-600'}`}>{step}</span>
+              </div>
             ))}
           </div>
         </div>
 
-        <div className="relative mx-auto hidden h-[360px] w-full max-w-[470px] lg:block" aria-hidden="true">
-          <div className="hero-orbit hero-orbit-outer absolute left-1/2 top-1/2 size-[330px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.08]" />
-          <div className="hero-orbit hero-orbit-inner absolute left-1/2 top-1/2 size-[230px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-signal-400/20" />
-          <div className="hero-core absolute left-1/2 top-1/2 grid size-32 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-signal-400/25 bg-signal-400/[0.08] shadow-[0_0_80px_rgba(45,212,167,0.12)] backdrop-blur-sm">
-            <div className="grid size-16 place-items-center rounded-2xl bg-signal-400 text-ink-950 shadow-[0_0_40px_rgba(45,212,167,0.28)]">
-              <Activity className="size-7" strokeWidth={2.4} />
-            </div>
+        <div className="relative flex min-h-[290px] flex-col justify-between p-6 lg:p-7">
+          <div className="flex items-center justify-between">
+            <div><p className="text-[0.62rem] font-bold uppercase tracking-wider text-slate-600">Requests / second</p><p className="mt-1 text-2xl font-[800] tracking-tight">8,432</p></div>
+            <div className="flex items-center gap-2 text-[0.64rem] font-bold text-signal-400"><Zap className="size-3.5" /> +18.4%</div>
           </div>
+          <div className="relative mt-5 h-52 overflow-hidden rounded-xl bg-black/10">
+            <div className="chart-grid absolute inset-0 opacity-70" />
+            <div className="dashboard-scan absolute inset-y-0 w-36 bg-gradient-to-r from-transparent via-violet-400/[0.08] to-transparent" />
+            <svg viewBox="0 0 700 210" className="absolute inset-0 h-full w-full" preserveAspectRatio="none" aria-hidden="true">
+              <defs><linearGradient id="dashboard-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2dd4a7" stopOpacity=".22" /><stop offset="1" stopColor="#2dd4a7" stopOpacity="0" /></linearGradient></defs>
+              <path d="M0 180 C48 172 62 145 105 153 S165 116 208 129 S274 92 320 105 S382 62 430 77 S497 48 540 57 S615 26 700 38 L700 210 L0 210 Z" fill="url(#dashboard-fill)" />
+              <path className="dashboard-line" d="M0 180 C48 172 62 145 105 153 S165 116 208 129 S274 92 320 105 S382 62 430 77 S497 48 540 57 S615 26 700 38" fill="none" stroke="#2dd4a7" strokeLinecap="round" strokeWidth="3" />
+            </svg>
+            <span className="request-particle request-particle-one absolute size-2 rounded-full bg-signal-400 shadow-[0_0_14px_#2dd4a7]" />
+            <span className="request-particle request-particle-two absolute size-1.5 rounded-full bg-violet-400 shadow-[0_0_12px_#8b7dff]" />
+          </div>
+        </div>
 
-          <TelemetryNode className="left-0 top-8" icon={Radio} label="Throughput" value="8.4k rps" delay="0s" />
-          <TelemetryNode className="right-0 top-20" icon={Gauge} label="p95 latency" value="184 ms" delay="-1.1s" />
-          <TelemetryNode className="bottom-3 left-12" icon={ServerCog} label="Workers" value="20 active" delay="-2.2s" />
-
-          <div className="hero-packet hero-packet-one absolute left-[18%] top-[44%] size-2 rounded-full bg-violet-500 shadow-[0_0_14px_rgba(117,103,248,0.8)]" />
-          <div className="hero-packet hero-packet-two absolute right-[20%] top-[56%] size-2 rounded-full bg-signal-400 shadow-[0_0_14px_rgba(45,212,167,0.8)]" />
-          <Orbit className="hero-orbit-icon absolute bottom-12 right-12 size-5 text-slate-600" />
+        <div className="grid grid-cols-3 gap-px border-t border-white/[0.07] bg-white/[0.07] lg:grid-cols-1 lg:border-l lg:border-t-0">
+          {[
+            ['184 ms', 'p95 latency', 'text-white'],
+            ['0.18%', 'error rate', 'text-signal-400'],
+            ['20', 'active workers', 'text-violet-300'],
+          ].map(([value, label, color]) => (
+            <div className="flex flex-col justify-center bg-ink-950/90 p-5 lg:p-7" key={label}>
+              <p className={`text-xl font-[800] tracking-[-0.04em] sm:text-2xl ${color}`}>{value}</p>
+              <p className="mt-2 text-[0.58rem] font-bold uppercase tracking-wider text-slate-600 sm:text-[0.64rem]">{label}</p>
+            </div>
+          ))}
         </div>
       </div>
-
-      <div className="relative flex items-center justify-between border-t border-white/[0.07] px-6 py-4 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-slate-600 sm:px-10 lg:px-12">
-        <span>Distributed performance testing</span>
-        <Link href="/app/tests" className="flex items-center gap-2 text-slate-400 hover:text-white">
-          Explore the workspace <ArrowUpRight className="size-3.5" />
-        </Link>
-      </div>
     </section>
-  );
-}
-
-function TelemetryNode({
-  className,
-  icon: Icon,
-  label,
-  value,
-  delay,
-}: {
-  className: string;
-  icon: typeof Activity;
-  label: string;
-  value: string;
-  delay: string;
-}) {
-  return (
-    <div
-      className={`hero-telemetry absolute flex min-w-40 items-center gap-3 rounded-2xl border border-white/10 bg-ink-900/85 p-3.5 shadow-2xl backdrop-blur-xl ${className}`}
-      style={{ animationDelay: delay }}
-    >
-      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white/[0.06] text-signal-400">
-        <Icon className="size-4" />
-      </span>
-      <div>
-        <p className="text-[0.62rem] font-bold uppercase tracking-wider text-slate-600">{label}</p>
-        <p className="mt-1 text-sm font-extrabold text-white">{value}</p>
-      </div>
-    </div>
   );
 }
