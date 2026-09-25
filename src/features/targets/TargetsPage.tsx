@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Check,
   Clipboard,
@@ -9,6 +9,8 @@ import {
   KeyRound,
   RefreshCw,
   ShieldCheck,
+  ArrowRight,
+  FlaskConical,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -19,6 +21,7 @@ import { Button } from '../../components/ui/Button';
 import { ErrorNotice } from '../../components/ui/ErrorNotice';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { StatusBadge } from '../../components/ui/StatusBadge';
+import { ButtonLink } from '../../components/ui/ButtonLink';
 
 const schema = z.object({
   targetUrl: z.url('Enter an absolute HTTP or HTTPS URL'),
@@ -28,6 +31,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export function TargetsPage() {
+  const queryClient = useQueryClient();
   const [challenge, setChallenge] = useState<TargetVerification | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const {
@@ -38,15 +42,25 @@ export function TargetsPage() {
     resolver: zodResolver(schema),
     defaultValues: { targetUrl: '', method: 'dns_txt' },
   });
+  const verifications = useQuery({
+    queryKey: ['target-verifications'],
+    queryFn: api.listVerifications,
+  });
 
   const create = useMutation({
     mutationFn: (values: FormValues) =>
       api.createVerification(values.targetUrl, values.method),
-    onSuccess: setChallenge,
+    onSuccess: async (result) => {
+      setChallenge(result);
+      await queryClient.invalidateQueries({ queryKey: ['target-verifications'] });
+    },
   });
   const verify = useMutation({
-    mutationFn: () => api.verifyTarget(challenge?.id ?? ''),
-    onSuccess: setChallenge,
+    mutationFn: (id: string) => api.verifyTarget(id),
+    onSuccess: async (result) => {
+      setChallenge(result);
+      await queryClient.invalidateQueries({ queryKey: ['target-verifications'] });
+    },
   });
 
   const copy = async (label: string, value?: string) => {
@@ -65,6 +79,28 @@ export function TargetsPage() {
         title="Target access"
         description="Prove control of a hostname before any distributed traffic can be dispatched to it."
       />
+
+      <div className="mb-6 grid gap-3 rounded-2xl border border-violet-100 bg-violet-50/70 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+        <div>
+          <p className="text-sm font-bold text-violet-950">Need a zero-setup portfolio demo?</p>
+          <p className="mt-1 text-xs leading-5 text-violet-700">
+            The Docker stack includes a safe target. It is automatically verified and supports fast, slow, error, and timeout routes.
+          </p>
+        </div>
+        <Button
+          variant="secondary"
+          loading={create.isPending}
+          icon={<FlaskConical className="size-4" />}
+          onClick={() =>
+            create.mutate({
+              targetUrl: 'http://demo-target:4000/fast',
+              method: 'http_file',
+            })
+          }
+        >
+          Enable demo target
+        </Button>
+      </div>
 
       {error ? (
         <div className="mb-5 max-w-3xl">
@@ -221,12 +257,21 @@ export function TargetsPage() {
                     <RefreshCw className="size-4" />
                   )
                 }
-                onClick={() => verify.mutate()}
+                onClick={() => verify.mutate(challenge.id)}
               >
                 {challenge.status === 'verified'
                   ? 'Ownership verified'
                   : 'Check ownership'}
               </Button>
+              {challenge.status === 'verified' ? (
+                <ButtonLink
+                  to={`/app/tests/new?target=${encodeURIComponent(targetUrlFor(challenge))}`}
+                  className="ml-3 mt-5"
+                  icon={<ArrowRight className="size-4" />}
+                >
+                  Configure a test
+                </ButtonLink>
+              ) : null}
             </div>
           ) : null}
         </section>
@@ -265,8 +310,65 @@ export function TargetsPage() {
           </div>
         </aside>
       </div>
+
+      <section className="mt-8">
+        <div className="mb-4">
+          <p className="text-lg font-bold tracking-tight text-ink-950">Your target history</p>
+          <p className="mt-1 text-xs text-slate-400">Challenges are saved, so refreshing the page does not lose your progress.</p>
+        </div>
+        <div className="panel overflow-hidden">
+          {verifications.isLoading ? (
+            <div className="p-6 text-sm text-slate-400">Loading targets…</div>
+          ) : null}
+          {verifications.data?.length === 0 ? (
+            <div className="p-6 text-sm text-slate-400">No verification challenges yet.</div>
+          ) : null}
+          {verifications.data?.map((verification, index) => (
+            <div
+              key={verification.id}
+              className="flex flex-col justify-between gap-4 px-5 py-4 sm:flex-row sm:items-center"
+              style={{ borderTop: index ? '1px solid rgb(241 245 249)' : undefined }}
+            >
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <p className="text-sm font-bold text-slate-800">{verification.hostname}</p>
+                  <StatusBadge status={verification.status} />
+                </div>
+                <p className="mt-1.5 text-xs text-slate-400">
+                  {verification.method === 'dns_txt' ? 'DNS TXT record' : 'HTTPS file'} · expires {new Date(verification.expiresAt).toLocaleString()}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                {verification.status !== 'verified' && verification.status !== 'expired' ? (
+                  <Button
+                    variant="secondary"
+                    loading={verify.isPending && challenge?.id === verification.id}
+                    onClick={() => {
+                      setChallenge(verification);
+                      verify.mutate(verification.id);
+                    }}
+                  >
+                    Check again
+                  </Button>
+                ) : null}
+                {verification.status === 'verified' ? (
+                  <ButtonLink to={`/app/tests/new?target=${encodeURIComponent(targetUrlFor(verification))}`}>
+                    Use target
+                  </ButtonLink>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </>
   );
+}
+
+function targetUrlFor(verification: TargetVerification): string {
+  return verification.hostname === 'demo-target'
+    ? 'http://demo-target:4000/fast'
+    : `https://${verification.hostname}`;
 }
 
 interface CopyRowProps {

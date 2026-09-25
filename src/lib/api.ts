@@ -75,6 +75,8 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ targetUrl, method }),
     }),
+  listVerifications: () =>
+    request<TargetVerification[]>('/targets/verifications'),
   verifyTarget: (id: string) =>
     request<TargetVerification>(`/targets/verifications/${id}/verify`, {
       method: 'POST',
@@ -83,6 +85,9 @@ export const api = {
   startRun: (testId: string) =>
     request<TestRun>(`/tests/${testId}/runs`, { method: 'POST' }),
   getRun: (id: string) => request<TestRun>(`/runs/${id}`),
+  listRuns: () => request<TestRun[]>('/runs'),
+  listTestRuns: (testId: string) =>
+    request<TestRun[]>(`/tests/${testId}/runs`),
   stopRun: (id: string) =>
     request<TestRun>(`/runs/${id}/stop`, { method: 'POST' }),
   getRunMetrics: (id: string) =>

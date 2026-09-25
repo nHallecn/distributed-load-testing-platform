@@ -1,11 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { isIP } from 'node:net';
 import { lookup } from 'node:dns/promises';
+import { ConfigService } from '@nestjs/config';
 
 const BLOCKED_HOST_SUFFIXES = ['.local', '.internal', '.localhost'];
 
 @Injectable()
 export class UrlPolicyService {
+  constructor(private readonly config?: ConfigService) {}
+
   async assertPublicHttpUrl(rawUrl: string): Promise<URL> {
     let url: URL;
     try {
@@ -22,6 +25,15 @@ export class UrlPolicyService {
     }
     if (!url.hostname || this.isBlockedHostname(url.hostname)) {
       throw new BadRequestException('The target hostname is not allowed');
+    }
+
+    const demoHost = this.config?.get<string>('DEMO_TARGET_HOST', '').toLowerCase();
+    if (
+      demoHost &&
+      this.config?.get<boolean>('DEMO_TARGET_AUTO_VERIFY', false) &&
+      url.hostname.toLowerCase() === demoHost
+    ) {
+      return url;
     }
 
     const addresses = isIP(url.hostname)
