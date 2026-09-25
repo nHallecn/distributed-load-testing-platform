@@ -8,10 +8,14 @@ export const environmentSchema = Joi.object({
   REDIS_URL: Joi.string().uri({ scheme: ['redis', 'rediss'] }).required(),
   WORKER_QUEUE_NAME: Joi.string().default('load-test-jobs'),
   WORKER_CAPACITY: Joi.number().integer().min(1).default(500),
+  WORKER_CONCURRENCY: Joi.number().integer().min(1).max(32).default(4),
   MAX_VIRTUAL_USERS_PER_RUN: Joi.number().integer().min(1).default(10_000),
   MAX_TEST_DURATION_SECONDS: Joi.number().integer().min(1).default(3_600),
   TARGET_VERIFICATION_REQUIRED: Joi.boolean().truthy('true').falsy('false').default(true),
   TARGET_REQUEST_TIMEOUT_MS: Joi.number().integer().min(100).default(10_000),
+  ANONYMOUS_WORKSPACE_SECRET: Joi.string().min(32).default('loadgrid-local-development-secret-change-me'),
+  DEMO_TARGET_HOST: Joi.string().allow('').default(''),
+  DEMO_TARGET_AUTO_VERIFY: Joi.boolean().truthy('true').falsy('false').default(false),
   DATABASE_SSL: Joi.boolean().truthy('true').falsy('false').default(false),
 });
 

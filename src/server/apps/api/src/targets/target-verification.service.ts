@@ -10,6 +10,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ConfigService } from '@nestjs/config';
 import { randomBytes } from 'node:crypto';
 import { resolveTxt } from 'node:dns/promises';
 import { MoreThan, Repository } from 'typeorm';
@@ -23,11 +24,15 @@ export class TargetVerificationService {
     private readonly verifications: Repository<TargetVerificationEntity>,
     private readonly urlPolicy: UrlPolicyService,
     private readonly audit: AuditService,
+    private readonly config: ConfigService,
   ) {}
 
   async create(ownerId: string, dto: CreateTargetVerificationDto) {
     const target = await this.urlPolicy.assertPublicHttpUrl(dto.targetUrl);
     const hostname = target.hostname.toLowerCase();
+    const isDemoTarget =
+      this.config.get<boolean>('DEMO_TARGET_AUTO_VERIFY', false) &&
+      hostname === this.config.get<string>('DEMO_TARGET_HOST', '').toLowerCase();
     const verification = await this.verifications.save(
       this.verifications.create({
         ownerId,
@@ -35,6 +40,10 @@ export class TargetVerificationService {
         method: dto.method,
         token: randomBytes(32).toString('hex'),
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        status: isDemoTarget
+          ? VerificationStatus.VERIFIED
+          : VerificationStatus.PENDING,
+        verifiedAt: isDemoTarget ? new Date() : null,
       }),
     );
     await this.audit.record({
@@ -45,24 +54,33 @@ export class TargetVerificationService {
       metadata: { hostname, method: dto.method },
     });
 
-    return {
-      ...verification,
-      instructions:
-        dto.method === VerificationMethod.DNS_TXT
-          ? {
-              recordType: 'TXT',
-              name: `_loadtest-verification.${hostname}`,
-              value: `loadtest-verification=${verification.token}`,
-            }
-          : {
-              url: `https://${hostname}/.well-known/loadtest-verification.txt`,
-              body: `loadtest-verification=${verification.token}`,
-            },
-    };
+    return this.present(verification);
+  }
+
+  async list(ownerId: string) {
+    const records = await this.verifications.find({
+      where: { ownerId },
+      order: { createdAt: 'DESC' },
+      take: 50,
+    });
+    const now = Date.now();
+    const expired = records.filter(
+      (record) =>
+        record.expiresAt.getTime() <= now &&
+        record.status !== VerificationStatus.EXPIRED,
+    );
+    if (expired.length) {
+      expired.forEach((record) => (record.status = VerificationStatus.EXPIRED));
+      await this.verifications.save(expired);
+    }
+    return records.map((record) => this.present(record));
   }
 
   async verify(ownerId: string, id: string) {
     const verification = await this.findOwned(ownerId, id);
+    if (verification.status === VerificationStatus.VERIFIED) {
+      return this.present(verification);
+    }
     if (verification.expiresAt.getTime() <= Date.now()) {
       verification.status = VerificationStatus.EXPIRED;
       await this.verifications.save(verification);
@@ -97,7 +115,7 @@ export class TargetVerificationService {
       resourceId: saved.id,
       metadata: { hostname: saved.hostname, method: saved.method },
     });
-    return saved;
+    return this.present(saved);
   }
 
   async findVerifiedForTarget(ownerId: string, rawUrl: string) {
@@ -144,5 +162,22 @@ export class TargetVerificationService {
     }
     const body = (await response.text()).trim();
     return body === `loadtest-verification=${verification.token}`;
+  }
+
+  private present(verification: TargetVerificationEntity) {
+    return {
+      ...verification,
+      instructions:
+        verification.method === VerificationMethod.DNS_TXT
+          ? {
+              recordType: 'TXT',
+              name: `_loadtest-verification.${verification.hostname}`,
+              value: `loadtest-verification=${verification.token}`,
+            }
+          : {
+              url: `https://${verification.hostname}/.well-known/loadtest-verification.txt`,
+              body: `loadtest-verification=${verification.token}`,
+            },
+    };
   }
 }

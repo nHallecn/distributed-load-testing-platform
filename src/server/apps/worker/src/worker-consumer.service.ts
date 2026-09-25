@@ -40,7 +40,10 @@ export class WorkerConsumerService
     this.consumer = new Worker<ExecuteTestJob>(
       queueName,
       (job) => this.process(job),
-      { connection, concurrency: 1 },
+      {
+        connection,
+        concurrency: this.config.get<number>('WORKER_CONCURRENCY', 4),
+      },
     );
     this.consumer.on('failed', (job, error) => {
       this.logger.error(`Job ${job?.id ?? 'unknown'} failed`, error.stack);
