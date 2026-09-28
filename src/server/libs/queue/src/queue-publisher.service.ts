@@ -50,7 +50,8 @@ export class QueuePublisherService implements OnApplicationShutdown {
         data: payload,
         opts: {
           jobId: `${run.id}:${index}`,
-          attempts: 1,
+          attempts: 2,
+          backoff: { type: 'exponential', delay: 1_000 },
           removeOnComplete: 1_000,
           removeOnFail: 5_000,
         },
@@ -61,6 +62,10 @@ export class QueuePublisherService implements OnApplicationShutdown {
 
   async requestStop(runId: string) {
     await this.redis.set(`loadtest:run:${runId}:cancelled`, '1', 'EX', 86_400);
+  }
+
+  async ping() {
+    return this.redis.ping();
   }
 
   async onApplicationShutdown() {

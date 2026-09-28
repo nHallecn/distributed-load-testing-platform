@@ -280,6 +280,9 @@ export class LoadGeneratorService {
       const failedWorkers = await manager.count(WorkerEntity, {
         where: { runId, status: 'failed' },
       });
+      const cancelledWorkers = await manager.count(WorkerEntity, {
+        where: { runId, status: 'cancelled' },
+      });
 
       const snapshots = await manager.query<
         Array<{
@@ -321,7 +324,8 @@ export class LoadGeneratorService {
           buckets: {},
         },
       );
-      const cancelled = run.status === RunStatus.STOPPING;
+      const cancelled =
+        run.status === RunStatus.STOPPING || cancelledWorkers > 0;
       run.status =
         failedWorkers > 0
           ? RunStatus.FAILED
@@ -331,6 +335,8 @@ export class LoadGeneratorService {
       run.endedAt = new Date();
       if (failedWorkers > 0) {
         run.stopReason = `${failedWorkers} worker partition(s) failed`;
+      } else if (cancelledWorkers > 0 && !run.stopReason) {
+        run.stopReason = 'An automatic safety threshold stopped the run';
       }
       run.totalRequests = String(aggregate.total);
       run.failedRequests = String(aggregate.failed);

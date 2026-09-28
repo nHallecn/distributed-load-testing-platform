@@ -1,5 +1,6 @@
 import { apiResponse, uuid } from '@/server/next/http';
 import { publicServices } from '@/server/next/services';
+import { workspaceKey } from '@/server/next/workspace';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,6 +12,6 @@ export async function POST(
   return apiResponse(request, async () => {
     const { id } = await params;
     const { targets, workspace } = await publicServices();
-    return targets.verify(await workspace.ownerId(), uuid(id));
+    return targets.verify(await workspace.ownerId(workspaceKey(request)), uuid(id));
   });
 }

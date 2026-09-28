@@ -8,4 +8,4 @@ backend
 .env.*
 *.log
 *.tsbuildinfo
-
+!tools/demo-target.mjs

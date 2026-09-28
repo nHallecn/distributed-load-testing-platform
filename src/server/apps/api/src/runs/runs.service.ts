@@ -135,6 +135,24 @@ export class RunsService {
     });
   }
 
+  listRecent(ownerId: string) {
+    return this.runs.find({
+      where: { test: { ownerId } },
+      relations: { test: true },
+      order: { createdAt: 'DESC' },
+      take: 30,
+    });
+  }
+
+  async listForTest(ownerId: string, testId: string) {
+    await this.loadTests.getOwned(ownerId, testId);
+    return this.runs.find({
+      where: { testId },
+      order: { createdAt: 'DESC' },
+      take: 30,
+    });
+  }
+
   async getReport(ownerId: string, runId: string) {
     const run = await this.getOwned(ownerId, runId);
     if (!this.state.isTerminal(run.status)) {

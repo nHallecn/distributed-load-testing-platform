@@ -7,6 +7,7 @@ import {
   InternalServerErrorException,
   type Type,
 } from '@nestjs/common';
+import { attachWorkspaceCookie } from './workspace';
 
 interface RateLimitEntry {
   count: number;
@@ -28,7 +29,10 @@ export async function apiResponse(
   try {
     enforceRateLimit(request);
     const result = await action();
-    return Response.json(result, { status: successStatus });
+    return attachWorkspaceCookie(
+      Response.json(result, { status: successStatus }),
+      request,
+    );
   } catch (error) {
     const exception =
       error instanceof HttpException
@@ -40,7 +44,10 @@ export async function apiResponse(
       typeof response === 'string'
         ? { statusCode: exception.getStatus(), message: response }
         : response;
-    return Response.json(payload, { status: exception.getStatus() });
+    return attachWorkspaceCookie(
+      Response.json(payload, { status: exception.getStatus() }),
+      request,
+    );
   }
 }
 
@@ -70,6 +77,10 @@ export async function validatedBody<T extends object>(
   request: Request,
   dto: Type<T>,
 ): Promise<T> {
+  const length = Number(request.headers.get('content-length') ?? 0);
+  if (length > 65_536) {
+    throw new BadRequestException('Request body cannot exceed 64 KB');
+  }
   let body: unknown;
   try {
     body = await request.json();
